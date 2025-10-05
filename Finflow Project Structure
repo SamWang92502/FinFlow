@@ -1,0 +1,54 @@
+src/
+ └── main/
+     ├── java/
+     │    └── com/sam/finflow/
+     │         ├── FinflowApplication.java        <-- Spring Boot entry point
+     │
+     │         ├── config/                        <-- Spring configs (DB, Redis, security)
+     │         │     ├── DatabaseConfig.java
+     │         │     └── SecurityConfig.java
+     │
+     │         ├── domain/                        <-- Core business logic
+     │         │     ├── customer/
+     │         │     │     ├── Customer.java
+     │         │     │     ├── CustomerRepository.java
+     │         │     │     └── CustomerService.java
+     │         │     │
+     │         │     ├── banklink/
+     │         │     │     ├── BankLink.java
+     │         │     │     ├── BankLinkRepository.java
+     │         │     │     └── BankLinkService.java
+     │         │     │
+     │         │     └── disbursement/
+     │         │           ├── Disbursement.java
+     │         │           ├── DisbursementRepository.java
+     │         │           └── DisbursementService.java
+     │
+     │         ├── controller/                    <-- REST API endpoints
+     │         │     ├── CustomerController.java
+     │         │     ├── BankLinkController.java
+     │         │     └── DisbursementController.java
+     │
+     │         ├── dto/                           <-- Request/response payload objects
+     │         │     ├── CustomerDto.java
+     │         │     ├── BankLinkDto.java
+     │         │     └── DisbursementDto.java
+     │
+     │         ├── repo/                          <-- Infrastructure/persistence helpers
+     │         │     └── JpaConfiguration.java
+     │
+     │         ├── integration/                   <-- External APIs (Plaid, payment gateways)
+     │         │     └── PlaidClient.java
+     │
+     │         ├── messaging/                     <-- Kafka / RabbitMQ producers, consumers
+     │         │     └── DisbursementEventPublisher.java
+     │
+     │         └── util/                          <-- Shared utilities / helpers
+     │               ├── Money.java
+     │               └── IdGenerator.java
+     │
+     └── resources/
+          ├── application.yml                     <-- App config
+          ├── db/migration/                       <-- Flyway SQL migrations
+          │     └── V1__init.sql
+          └── static/                             <-- Optional static files for testing
