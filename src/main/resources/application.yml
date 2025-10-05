@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: finflow
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update   # dev only; use Flyway later
+server:
+  port: 8080
+logging:
+  level:
+    org.springframework: INFO
