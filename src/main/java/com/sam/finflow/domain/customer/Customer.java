@@ -12,13 +12,22 @@ public class Customer {
     private UUID id; //Universally Unique Identifier
 
     @Column(nullable = false)
+    @jakarta.validation.constraints.NotBlank
     private String fullName;
 
     @Column(nullable = false, unique = true)
+    @jakarta.validation.constraints.Email
     private String email;
 
     @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private final OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(nullable = false)
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    //updates the “Last Edited” timestamp
+    @PreUpdate
+    public void onUpdate() { updatedAt = OffsetDateTime.now(); }
 
     protected Customer() { } //For JPA
 
@@ -33,5 +42,5 @@ public class Customer {
     public OffsetDateTime getCreatedAt() { return createdAt; }
 
     public void setFullName(String fullName) { this.fullName = fullName; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) { this.email = email.trim().toLowerCase(); }
 }
