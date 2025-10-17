@@ -34,14 +34,11 @@ public class BankLink {
 
     @NotNull
     @Column(name = "customer_id", nullable = false)
-    private UUID customerId;
+    private UUID customerId; //Model BankLink → single customerId: UUID
 
     @NotBlank
     @Column(nullable = false)
     private String provider; // 'plaid', 'teller', ...
-
-    @Column(name = "provider_item_id")
-    private String providerItemId; // optional
 
     @NotBlank
     @Column(name = "provider_account_id", nullable = false)
@@ -58,8 +55,12 @@ public class BankLink {
     @Column(nullable = false)
     private Status status = Status.PENDING;
 
-    @Column(name = "is_active_method", nullable = false)
-    private boolean activeMethod = false;
+    @Column(name = "is_primary", nullable = false)
+    private boolean primary;
+
+    // 🆕 Add this new field — when customer gave consent
+    @Column(name = "consent_at")
+    private OffsetDateTime consentAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -88,52 +89,55 @@ public class BankLink {
         this.institutionName = institutionName;
         this.last4 = last4;
         this.status = Status.PENDING;
-        this.activeMethod = false;
+        this.primary = false;
     }
 
     // Getters
     public UUID getId() { return id; }
     public UUID getCustomerId() { return customerId; }
     public String getProvider() { return provider; }
-    public String getProviderItemId() { return providerItemId; }
     public String getProviderAccountId() { return providerAccountId; }
     public String getInstitutionName() { return institutionName; }
     public String getLast4() { return last4; }
     public Status getStatus() { return status; }
-    public boolean isActiveMethod() { return activeMethod; }
+    public boolean isPrimary() { return primary; }
+    public OffsetDateTime getConsentAt() { return consentAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getActivatedAt() { return activatedAt; }
     public OffsetDateTime getRevokedAt() { return revokedAt; }
 
+
     // Domain actions
-    public void activate() {
-        if (status == Status.REVOKED) throw new IllegalStateException("Cannot activate a revoked link");
+    public void activate(OffsetDateTime consentAt) {
+        if (status != Status.PENDING)
+            throw new IllegalStateException("Only PENDING can activate");
         this.status = Status.ACTIVE;
+        this.consentAt = (consentAt != null ? consentAt : OffsetDateTime.now()); // ✅ set here
         this.activatedAt = OffsetDateTime.now();
     }
 
-    public void revoke(String reason) {
+    public void revoke() {
         if (status == Status.REVOKED) return;
         this.status = Status.REVOKED;
         this.revokedAt = OffsetDateTime.now();
-        this.activeMethod = false;
+        this.primary = false;
     }
 
     public void fail() {
         if (status == Status.REVOKED) return;
         this.status = Status.FAILED;
-        this.activeMethod = false;
+        this.primary = false;
     }
 
     public void makePrimary() {
         if (status != Status.ACTIVE) {
             throw new IllegalStateException("Only ACTIVE links can be primary");
         }
-        this.activeMethod = true;
+        this.primary = true;
     }
 
     public void clearPrimary() {
-        this.activeMethod = false;
+        this.primary = false;
     }
 
     public void setInstitutionName(String institutionName) {

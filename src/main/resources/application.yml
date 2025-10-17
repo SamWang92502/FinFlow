@@ -1,12 +1,13 @@
+# src/main/resources/application.yml
 spring:
-  application:
-    name: finflow
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5433/finflow?sslmode=disable
+    username: finflow
+    password: finflow
+    driver-class-name: org.postgresql.Driver
+
   jpa:
-    open-in-view: false
     hibernate:
-      ddl-auto: update   # dev only; use Flyway later
-server:
-  port: 8080
-logging:
-  level:
-    org.springframework: INFO
+      ddl-auto: create   # use update to create missing tables on first run
+    properties:
+      hibernate.format_sql: true

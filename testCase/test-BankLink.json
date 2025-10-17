@@ -1,0 +1,197 @@
+{
+  "info": {
+    "name": "FinFlow – BankLinks Full Suite",
+    "_postman_id": "finflow-banklinks-suite-0001",
+    "description": "End-to-end tests for BankLink lifecycle: create, list, get, make primary, activate, revoke. Uses env vars: base_url, customerId, provider, providerAccountId, bankLinkId, consentAt.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create BankLink (201 or 200)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Set a customerId in the db, and and set customerId in your Postman environment.",
+              "// Ensure providerAccountId exists (idempotent-friendly)",
+              "if (!pm.environment.get('providerAccountId')) {",
+              "  pm.environment.set('providerAccountId', 'acct_' + Date.now());",
+              "}",
+              "// Default provider if missing",
+              "if (!pm.environment.get('provider')) {",
+              "  pm.environment.set('provider', 'PLAID');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created or 200 OK', function () {",
+              "  pm.expect([200,201]).to.include(pm.response.code);",
+              "});",
+              "const b = pm.response.json();",
+              "pm.test('Response has id', () => pm.expect(b).to.have.property('id'));",
+              "pm.environment.set('bankLinkId', b.id);",
+              "pm.test('Saved bankLinkId to env', () => pm.environment.get('bankLinkId') === String(b.id));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/bank-links",
+          "host": ["{{base_url}}"],
+          "path": ["bank-links"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"provider\": \"{{provider}}\",\n  \"providerAccountId\": \"{{providerAccountId}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List BankLinks by Customer (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const arr = pm.response.json();",
+              "pm.test('Response is array', () => Array.isArray(arr));",
+              "// If bankLinkId not set yet, take first item",
+              "if (!pm.environment.get('bankLinkId') && arr.length > 0) {",
+              "  pm.environment.set('bankLinkId', arr[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/customers/{{customerId}}/bank-links",
+          "host": ["{{base_url}}"],
+          "path": ["customers", "{{customerId}}", "bank-links"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Activate BankLink (200)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('consentAt')) {",
+              "  pm.environment.set('consentAt', new Date().toISOString());",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('BankLink id matches', () => String(b.id) === pm.environment.get('bankLinkId'));",
+              "pm.test('Status is ACTIVE', () => b.status === 'ACTIVE');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/bank-links/{{bankLinkId}}/activate?consentAt={{consentAt}}",
+          "host": ["{{base_url}}"],
+          "path": ["bank-links", "{{bankLinkId}}", "activate"],
+          "query": [
+            { "key": "consentAt", "value": "{{consentAt}}" }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Make BankLink Primary (200, returns list)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const arr = pm.response.json();",
+              "pm.test('Response is array', () => Array.isArray(arr));",
+              "// optional: ensure the env bankLinkId is present in the list",
+              "pm.test('Contains bankLinkId', () => arr.some(x => String(x.id) === pm.environment.get('bankLinkId')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/bank-links/{{bankLinkId}}/primary?customerId={{customerId}}",
+          "host": ["{{base_url}}"],
+          "path": ["bank-links", "{{bankLinkId}}", "primary"],
+          "query": [
+            { "key": "customerId", "value": "{{customerId}}" }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Revoke BankLink (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('BankLink id matches', () => String(b.id) === pm.environment.get('bankLinkId'));",
+              "pm.test('Status is REVOKED', () => b.status === 'REVOKED');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/bank-links/{{bankLinkId}}/revoke",
+          "host": ["{{base_url}}"],
+          "path": ["bank-links", "{{bankLinkId}}", "revoke"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "customerId", "value": "0a835ae1-d552-46e2-bd53-f74fbfd0db1e" },
+    { "key": "provider", "value": "PLAID" },
+    { "key": "providerAccountId", "value": "" },
+    { "key": "bankLinkId", "value": "" },
+    { "key": "consentAt", "value": "" }
+  ],
+  "protocolProfileBehavior": {}
+}

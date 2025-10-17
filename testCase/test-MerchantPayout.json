@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "FinFlow API – Merchant Payouts",
+    "_postman_id": "a1b2c3d4-e5f6-7890-merchant-payouts",
+    "description": "Smoke & lifecycle tests for MerchantPayoutController endpoints.\nAll requests use {{base_url}} and environment variables for IDs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Merchant Payout (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created', () => pm.response.code === 201);",
+              "const b = pm.response.json();",
+              "pm.test('Response has id', () => pm.expect(b).to.have.property('id'));",
+              "pm.environment.set('payoutId', b.id);",
+              "pm.environment.set('merchantId', b.merchantId);",
+              "console.log('✅ Created payoutId =', b.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"merchantId\": \"{{merchantId}}\",\n  \"merchantSettlementAccountId\": \"11111111-1111-1111-1111-111111111111\",\n  \"captureId\": \"capture-{{timestamp}}\",\n  \"amount\": 250.75,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Merchant Payout (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('Matches stored payoutId', () => b.id === pm.environment.get('payoutId'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts/{{payoutId}}",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts", "{{payoutId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Merchant Payouts by Merchant (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const arr = pm.response.json();",
+              "pm.test('Response is array', () => Array.isArray(arr));",
+              "pm.test('Contains payoutId', () => arr.some(x => x.id === pm.environment.get('payoutId')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts/merchant/{{merchantId}}",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts", "merchant", "{{merchantId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mark as Processing (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('Status field is processing', () => b.status === 'PROCESSING');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts/{{payoutId}}/processing",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts", "{{payoutId}}", "processing"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mark as Settled (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('Status field is settled', () => b.status === 'SETTLED');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts/{{payoutId}}/settled",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts", "{{payoutId}}", "settled"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mark as Failed (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+              "const b = pm.response.json();",
+              "pm.test('Status field is failed', () => b.status === 'FAILED');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/merchant-payouts/{{payoutId}}/failed",
+          "host": ["{{base_url}}"],
+          "path": ["merchant-payouts", "{{payoutId}}", "failed"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "merchantId", "value": "22222222-2222-2222-2222-222222222222" },
+    { "key": "payoutId", "value": "" },
+    { "key": "timestamp", "value": "{{$timestamp}}" }
+  ]
+}

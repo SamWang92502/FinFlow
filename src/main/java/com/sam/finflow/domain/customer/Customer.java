@@ -40,6 +40,7 @@ public class Customer {
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 
     public void setFullName(String fullName) { this.fullName = fullName; }
     public void setEmail(String email) { this.email = email.trim().toLowerCase(); }

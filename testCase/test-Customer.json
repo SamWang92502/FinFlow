@@ -1,0 +1,169 @@
+{
+  "info": {
+    "name": "FinFlow API – Core Smoke (Customers)",
+    "_postman_id": "c1ad6ad6-1111-4b2b-9abc-0000finflow",
+    "description": "Core happy-path & edge-case tests for Customer APIs. Designed to run in any environment via {{base_url}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Create Customer (201)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// prerequest: run this script before the HTTP request is sent",
+                  "// Generate a unique email once per run if not set",
+                  "if (!pm.environment.get('email')) {",
+                  "  const ts = Date.now();",
+                  "  pm.environment.set('email', `sam+${ts}@example.com`);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// test: run this script after the response arrives",
+                  "// Checks status is 201 (created).",
+                  "pm.test('Status is 201 Created', () => pm.response.code === 201);",
+                  "// Checks the body has id, email, fullName",
+                  "pm.test('Response has id, email, fullName', () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b).to.have.property('id');",
+                  "  pm.expect(b).to.have.property('email');",
+                  "  pm.expect(b).to.have.property('fullName');",
+                  "});",
+                  "// Save id for subsequent requests",
+                  "pm.environment.set('customer_id', pm.response.json().id);",
+                  "// Basic schema-ish checks",
+                  "pm.test('Email matches input', () => pm.response.json().email.toLowerCase() === pm.environment.get('email').toLowerCase());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"fullName\": \"Sam Wang\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/customers",
+              "host": [ "{{base_url}}" ],
+              "path": [ "customers" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Customer Duplicate (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409 Conflict for duplicate email', () => pm.response.code === 409);",
+                  "pm.test('Body contains helpful message', () => pm.response.text().toLowerCase().includes('email'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"fullName\": \"Sam Duplicate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/customers",
+              "host": [ "{{base_url}}" ],
+              "path": [ "customers" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer by ID (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.code === 200);",
+                  "const b = pm.response.json();",
+                  "pm.test('Matches saved id', () => b.id === pm.environment.get('customer_id'));",
+                  "pm.test('Has stable fields', () => {",
+                  "  pm.expect(b).to.have.property('email');",
+                  "  pm.expect(b).to.have.property('fullName');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/customers/{{customer_id}}",
+              "host": [ "{{base_url}}" ],
+              "path": [ "customers", "{{customer_id}}" ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer – Not Found (404)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Random UUID v4-ish for negative test",
+                  "function rnd(){return (Math.random()*0xffffffff>>>0).toString(16).padStart(8,'0')}",
+                  "const fake = `${rnd().slice(0,8)}-${rnd().slice(0,4)}-${rnd().slice(0,4)}-${rnd().slice(0,4)}-${rnd()}${rnd()}`;",
+                  "pm.variables.set('fake_customer_id', fake);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 Not Found', () => pm.response.code === 404);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/customers/{{fake_customer_id}}",
+              "host": [ "{{base_url}}" ],
+              "path": [ "customers", "{{fake_customer_id}}" ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "protocolProfileBehavior": {}
+}

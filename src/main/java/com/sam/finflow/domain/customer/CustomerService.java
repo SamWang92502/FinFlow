@@ -30,8 +30,7 @@ public class CustomerService {
 
         String normalized = normalizeEmail(email);
 
-        // Prefer an exists-check that matches your DB semantics
-        // (implement existsByEmailIgnoreCase in the repository if you like)
+        // You detect duplicate before saving
         customers.findByEmail(normalized).ifPresent(c -> {
             throw new IllegalStateException("email already exists: " + normalized);
         });
@@ -44,15 +43,18 @@ public class CustomerService {
             return customers.save(c);
         } catch (DataIntegrityViolationException dup) {
             // Handles concurrent creates that hit the unique constraint
+            // Database detects duplicate (race condition)
             throw new IllegalStateException("email already exists: " + normalized, dup);
         }
     }
 
+    //API or controller layer use
     @Transactional(readOnly = true)
     public Optional<Customer> getCustomer(UUID id) {
         return customers.findById(id);
     }
 
+    //Business logic layer use
     @Transactional(readOnly = true)
     public Customer getCustomerOrThrow(UUID id) {
         return customers.findById(id)

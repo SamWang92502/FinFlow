@@ -23,8 +23,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.postgresql:postgresql")
 
+    runtimeOnly("org.postgresql:postgresql")
+    // Annotations (silence When.MAYBE warning)
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
     // Tests
     testImplementation("org.springframework.boot:spring-boot-starter-test")
